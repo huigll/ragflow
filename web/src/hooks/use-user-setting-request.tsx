@@ -21,6 +21,10 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import {
+  normalizeParserOptions,
+  type ParserOption,
+} from './parser-option-utils';
 import { useWarnEmptyModel } from './use-warn-empty-model';
 
 export const enum UserSettingApiAction {
@@ -95,10 +99,7 @@ export const useFetchTenantInfo = (
   return { data, loading };
 };
 
-export const useSelectParserList = (): Array<{
-  value: string;
-  label: string;
-}> => {
+export const useSelectParserList = (): ParserOption[] => {
   const { data: tenantInfo } = useFetchTenantInfo(true);
   const { t } = useTranslation();
 
@@ -134,19 +135,10 @@ export const useSelectParserList = (): Array<{
     [t],
   );
 
-  const parserList = useMemo(() => {
-    const parserArray: Array<string> = tenantInfo?.parser_ids?.split(',') ?? [];
-    const filteredArray = parserArray.filter((x) => x.trim() !== '');
-
-    if (filteredArray.length === 0) {
-      return defaultParsers;
-    }
-
-    return filteredArray.map((x) => {
-      const arr = x.split(':');
-      return { value: arr[0], label: arr[1] };
-    });
-  }, [tenantInfo, defaultParsers]);
+  const parserList = useMemo(
+    () => normalizeParserOptions(tenantInfo?.parser_ids, defaultParsers),
+    [tenantInfo, defaultParsers],
+  );
 
   return parserList;
 };
