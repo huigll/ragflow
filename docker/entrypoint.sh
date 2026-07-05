@@ -2,6 +2,11 @@
 
 set -e
 
+# BEGIN local ONNX Runtime CUDA library path
+PY_SITE=/ragflow/.venv/lib/python3.13/site-packages
+export LD_LIBRARY_PATH="${PY_SITE}/nvidia/cublas/lib:${PY_SITE}/nvidia/cuda_runtime/lib:${PY_SITE}/nvidia/cuda_nvrtc/lib:${PY_SITE}/nvidia/cufft/lib:${PY_SITE}/nvidia/curand/lib:${PY_SITE}/nvidia/cudnn/lib:${PY_SITE}/nvidia/nvjitlink/lib:${PY_SITE}/nvidia/cu13/lib:${PY_SITE}/nvidia/cusparselt/lib:${LD_LIBRARY_PATH:-}"
+# END local ONNX Runtime CUDA library path
+
 echo "Start RAGFlow cluster, version: "
 cat /ragflow/VERSION
 
@@ -181,7 +186,7 @@ while IFS= read -r line || [[ -n "$line" ]]; do
     fi
 done < "${TEMPLATE_FILE}"
 
-export LD_LIBRARY_PATH="/usr/lib/x86_64-linux-gnu/"
+export LD_LIBRARY_PATH="/usr/lib/x86_64-linux-gnu/:${PY_SITE}/nvidia/cublas/lib:${PY_SITE}/nvidia/cuda_runtime/lib:${PY_SITE}/nvidia/cuda_nvrtc/lib:${PY_SITE}/nvidia/cufft/lib:${PY_SITE}/nvidia/curand/lib:${PY_SITE}/nvidia/cudnn/lib:${PY_SITE}/nvidia/nvjitlink/lib:${PY_SITE}/nvidia/cu13/lib:${PY_SITE}/nvidia/cusparselt/lib:${LD_LIBRARY_PATH:-}"
 PY=python3
 
 # -----------------------------------------------------------------------------
