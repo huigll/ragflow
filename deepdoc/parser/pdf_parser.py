@@ -341,6 +341,10 @@ class RAGFlowPdfParser:
         best_img = table_img
         score_0 = None
 
+        # 0° is kept by the threshold rule below whenever its score reaches this
+        # bar, so once 0° clears it the other rotations cannot change the outcome.
+        KEEP_ZERO_SCORE = 0.8
+
         for angle, name in rotations:
             # Rotate image
             if angle == 0:
@@ -387,10 +391,16 @@ class RAGFlowPdfParser:
                 best_angle = angle
                 best_img = rotated_img
 
+            # Fast path: a confident 0° already clears the keep-threshold, so the
+            # rule below will keep it regardless of the other angles. Skip their OCR
+            # (3 extra full-OCR passes per table) — the dominant table-parsing cost.
+            if angle == 0 and score_0 >= KEEP_ZERO_SCORE:
+                break
+
         # Absolute threshold rule:
-        # Only choose non-0° if it exceeds 0° by more than 0.2 and 0° score is below 0.8.
+        # Only choose non-0° if it exceeds 0° by more than 0.2 and 0° score is below the keep bar.
         if best_angle != 0 and score_0 is not None:
-            if not (best_score - score_0 > 0.2 and score_0 < 0.8):
+            if not (best_score - score_0 > 0.2 and score_0 < KEEP_ZERO_SCORE):
                 best_angle = 0
                 best_img = table_img
                 best_score = score_0
