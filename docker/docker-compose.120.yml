@@ -1,0 +1,47 @@
+# Host-specific overrides for the GPU deployment on 192.168.12.120.
+# Keep secrets and mutable image tags in docker/.env on the server.
+services:
+  tei:
+    image: ${TEI_IMAGE:-ghcr.nju.edu.cn/huggingface/text-embeddings-inference:120-1.9}
+    container_name: tei
+    command:
+      - --model-id
+      - /data/bge-m3
+    environment:
+      RAYON_NUM_THREADS: "8"
+    volumes:
+      - tei_data_120:/data
+    networks:
+      - ragflow
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80/health"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 150s
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+
+  ragflow-cpu:
+    depends_on:
+      tei:
+        condition: service_healthy
+
+  ragflow-gpu:
+    depends_on:
+      tei:
+        condition: service_healthy
+    command:
+      - --enable-adminserver
+      - --workers=1
+
+volumes:
+  tei_data_120:
+    external: true
+    name: tei_data
