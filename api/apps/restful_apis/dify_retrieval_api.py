@@ -226,13 +226,13 @@ async def retrieval(tenant_id):
     try:
         req = await _read_retrieval_request()
     except parse_exception_types as e:
-        return build_error_result(
+        return get_json_result(
             message=f"invalid or malformed arguments: {str(e)}; ",
             code=RetCode.ARGUMENT_ERROR,
         )
     missing = [field for field in ("knowledge_id", "query") if not req.get(field)]
     if missing:
-        return build_error_result(
+        return get_json_result(
             message=f"required arguments are missing: {','.join(missing)}; ",
             code=RetCode.ARGUMENT_ERROR,
         )
@@ -242,7 +242,7 @@ async def retrieval(tenant_id):
     try:
         _, similarity_threshold, top = _parse_retrieval_options(req.get("retrieval_setting", {}))
     except ValueError as e:
-        return build_error_result(
+        return get_json_result(
             message=f"invalid or malformed arguments: {str(e)}; ",
             code=RetCode.ARGUMENT_ERROR,
         )

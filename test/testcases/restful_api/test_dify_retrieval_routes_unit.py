@@ -23,6 +23,7 @@ from pathlib import Path
 from types import ModuleType, SimpleNamespace
 
 import pytest
+from quart import Quart
 
 
 class _DummyManager:
@@ -393,6 +394,22 @@ def test_read_retrieval_request_from_post_json(monkeypatch):
 
     req = _run(module._read_retrieval_request())
     assert req == payload, req
+
+
+@pytest.mark.p2
+def test_retrieval_empty_post_keeps_business_code_out_of_http_status(monkeypatch):
+    module = _load_dify_retrieval_module(monkeypatch)
+
+    async def invoke():
+        app = Quart(__name__)
+        async with app.test_request_context("/dify/retrieval", method="POST", json={}):
+            response = await inspect.unwrap(module.retrieval)("tenant-1")
+            return response.status_code, await response.get_json()
+
+    status_code, payload = _run(invoke())
+
+    assert status_code == 200
+    assert payload["code"] == module.RetCode.ARGUMENT_ERROR
 
 
 @pytest.mark.p2
