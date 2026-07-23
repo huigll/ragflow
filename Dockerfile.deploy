@@ -179,7 +179,7 @@ WORKDIR /ragflow
 # These are not inherited from base to keep the production image smaller.
 RUN --mount=type=cache,id=ragflow_apt,target=/var/cache/apt,sharing=locked \
     apt update && \
-    apt install -y build-essential libpython3-dev libicu-dev libgbm-dev && \
+    apt install -y build-essential clang libpython3-dev libicu-dev libgbm-dev && \
     rm -rf /var/lib/apt/lists/*
 
 # install dependencies from uv.lock file
@@ -213,7 +213,9 @@ RUN --mount=type=cache,id=ragflow_uv,target=/root/.cache/uv,sharing=locked \
     # DEFAULT_HEALTH_CHECK_STALENESS_MULTIPLIER, 1.88.0 wheel pulled via
     # some proxies missing RedisPipelineLpopOperation) — always re-fetching
     # the locked version avoids serving a half-broken cached copy.
-    uv sync --python 3.13 --frozen --refresh-package litellm && \
+    # Python 3.13 resolves NumPy 1.26.4 from source because several locked
+    # dependencies require NumPy <2. GCC 13 can ICE while compiling it.
+    CC=clang CXX=clang++ uv sync --python 3.13 --frozen --refresh-package litellm && \
     # Ensure pip is available in the venv for runtime package installation (fixes #12651)
     .venv/bin/python3 -m ensurepip --upgrade
 
